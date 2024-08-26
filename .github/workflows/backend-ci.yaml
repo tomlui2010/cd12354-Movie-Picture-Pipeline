@@ -2,8 +2,8 @@ name: backend-ci
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'setup/frontend/**'
+    # paths:
+    #   - 'setup/frontend/**'
 jobs:  
   backend-ci:
     strategy:

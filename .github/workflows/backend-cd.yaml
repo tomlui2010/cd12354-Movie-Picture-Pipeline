@@ -1,0 +1,6 @@
+name: backend-cd
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'setup/frontend/**'

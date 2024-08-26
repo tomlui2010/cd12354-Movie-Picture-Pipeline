@@ -1,0 +1,6 @@
+name: frontend-ci
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'setup/frontend/**'
