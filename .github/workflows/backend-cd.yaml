@@ -23,7 +23,7 @@ jobs:
           pip install pipenv
       
       - name: Cache pipenv virtualenv
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.local/share/virtualenvs
@@ -65,7 +65,7 @@ jobs:
           pip install pipenv
       
       - name: Cache pipenv virtualenv
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.local/share/virtualenvs
@@ -101,7 +101,7 @@ jobs:
           pip install pipenv
       
       - name: Cache pipenv virtualenv
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.local/share/virtualenvs
