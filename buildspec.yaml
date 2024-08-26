@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo Installing dependencies...
+      - pip install --upgrade pip
+  pre_build:
+    commands:
+      - echo Logging into ECR
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  build:
+    commands:
+      - echo Start building at 'date'
+      - echo Building docker image for backend ..
+      - docker build -t backend:${{ github.sha }} starter/backend/.
+      - docker tag backend:${{ github.sha }} $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:${{ github.sha }}
+      - echo Building docker image for frontend ..
+      - docker build -t frontend:${{ github.sha }} starter/frontend/.
+      - docker tag frontend:${{ github.sha }} $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:${{ github.sha }}
+  post_build:    
+    commands:
+      - echo Completed build at 'date'
+      - echo Pushing the docker image to ECR repo
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:${{ github.sha }}
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:${{ github.sha }}
+      - echo Build Complete
