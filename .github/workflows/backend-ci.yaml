@@ -35,13 +35,13 @@ jobs:
 
       - name: Install the dependencies
         run: |
-          cd ~/work/cd12354-Movie-Picture-Pipeline/cd12354-Movie-Picture-Pipeline/starter/backend
+          cd starter/backend
           pipenv install --dev
 
       - name: Run linter
         if: matrix.task == 'lint'
         run: |
-          cd ~/work/cd12354-Movie-Picture-Pipeline/cd12354-Movie-Picture-Pipeline/starter/backend
+          cd starter/backend
           pipenv run lint
         continue-on-error: false
 
@@ -62,7 +62,7 @@ jobs:
       - name: Build the backend image
         if: matrix.task == 'build'
         run: |
-          cd ~/work/cd12354-Movie-Picture-Pipeline/cd12354-Movie-Picture-Pipeline/starter/backend
+          cd starter/backend
           docker build --tag mp-backend:latest .
 
       - name: Push docker image to AWS ECR
