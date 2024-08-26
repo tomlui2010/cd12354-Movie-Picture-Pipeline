@@ -126,7 +126,9 @@ jobs:
 
   frontend-cd-build:    
     name: frontend-cd-build
-    needs: wait_for_eks
+    needs: 
+    - wait_for_eks
+    - backend-cd-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
