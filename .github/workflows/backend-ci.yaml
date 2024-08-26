@@ -11,7 +11,7 @@ jobs:
   backend-ci:
     strategy:
       matrix:
-        task: [lint, test build]
+        task: [lint, test, build]
     name: backend-ci-${{ matrix.task }}
     runs-on: ubuntu-latest
     steps:
@@ -32,6 +32,10 @@ jobs:
         with:
           path: ~/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Install the dependencies
+        run: |
+          pipenv install --dev
 
       - name: Run linter
         if: matrix.task == 'lint'
@@ -54,16 +58,14 @@ jobs:
           pipenv install
           pipenv run test
 
-      - name: Install the dependencies
-        run: |
-          pipenv install --dev
-
       - name: Build the backend image
+        if: matrix.task == 'build'
         run: |
           cd starter/backend
           docker build --tag mp-backend:latest .
 
       - name: Push docker image to AWS ECR
+        if: matrix.task == 'build'
         run: | 
           
 
