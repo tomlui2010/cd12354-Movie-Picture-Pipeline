@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         task: [lint, test, build]
+      fail-fast: true
     name: backend-ci-${{ matrix.task }}
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +31,9 @@ jobs:
       - name: Cache pipenv virtualenv
         uses: actions/cache@v3
         with:
-          path: ~/.local/share/virtualenvs
+          path: |
+            ~/.local/share/virtualenvs
+            ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
 
       - name: Install the dependencies
@@ -69,5 +72,5 @@ jobs:
         if: matrix.task == 'build'
         run: | 
           
-
+    needs: ${{ matrix.task == 'lint' && [] || matrix.task == 'test' && ['backend-ci-lint'] || ['backend-ci-test'] }}  
     
