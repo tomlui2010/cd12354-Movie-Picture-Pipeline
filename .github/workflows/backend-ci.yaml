@@ -1,12 +1,9 @@
 name: backend-ci
 on:
-  push:
-    branches:
-      - main
-  # pull_request:
-  #   branches: [main]
-    # paths:
-    #   - 'setup/frontend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'setup/frontend/**'
 jobs:  
   backend-ci-lint:      
     name: backend-ci-lint
@@ -113,15 +110,16 @@ jobs:
       - name: Install the dependencies
         run: |
           cd starter/backend
-          pipenv install --dev          
+          pipenv install --dev     
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build the backend image
         run: |
           cd starter/backend
-          docker build --tag mp-backend:latest .
+          docker buildx build --tag mp-backend:latest .
 
-      - name: Push docker image to AWS ECR
-        run: | 
 
 
     
