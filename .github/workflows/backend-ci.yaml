@@ -38,14 +38,12 @@ jobs:
           pipenv install --dev
 
       - name: Run linter
-        if: matrix.task == 'lint'
         run: |
           cd starter/backend
           pipenv run lint
         continue-on-error: false
 
       - name: Run hadolint for dockerile
-        if: matrix.task == 'lint'
         run: |
           sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 && sudo chmod +x /usr/local/bin/hadolint
           /usr/local/bin/hadolint starter/backend/Dockerfile
@@ -82,7 +80,6 @@ jobs:
           pipenv install --dev
 
       - name: Run tests
-        if: matrix.task == 'test'
         run: |
           cd starter/backend
           pipenv install
@@ -119,13 +116,11 @@ jobs:
           pipenv install --dev          
 
       - name: Build the backend image
-        if: matrix.task == 'build'
         run: |
           cd starter/backend
           docker build --tag mp-backend:latest .
 
       - name: Push docker image to AWS ECR
-        if: matrix.task == 'build'
         run: | 
 
 
