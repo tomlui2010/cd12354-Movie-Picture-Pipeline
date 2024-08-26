@@ -1,0 +1,67 @@
+name: backend-ci
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'setup/frontend/**'
+jobs:  
+  backend-ci:
+    strategy:
+      matrix:
+        task: [lint, test build]
+    name: backend-ci-${{ matrix.task }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install pipenv
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipenv
+      
+      - name: Cache pipenv virtualenv
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Run linter
+        if: matrix.task == 'lint'
+        run: |
+          cd starter/backend
+          pipenv run lint
+        continue-on-error: false
+
+      - name: Run hadolint for dockerile
+        if: matrix.task == 'lint'
+        run: |
+          sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 && sudo chmod +x /usr/local/bin/hadolint
+          /usr/local/bin/hadolint starter/backend/Dockerfile
+        continue-on-error: false
+
+      - name: Run tests
+        if: matrix.task == 'test'
+        run: |
+          cd starter/backend
+          pipenv install
+          pipenv run test
+
+      - name: Install the dependencies
+        run: |
+          pipenv install --dev
+
+      - name: Build the backend image
+        run: |
+          cd starter/backend
+          docker build --tag mp-backend:latest .
+
+      - name: Push docker image to AWS ECR
+        run: | 
+          
+
+    
