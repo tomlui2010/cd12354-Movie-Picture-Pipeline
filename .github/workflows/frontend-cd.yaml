@@ -92,15 +92,6 @@ jobs:
         run: |
           cd starter/frontend && npm ci
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build the frontend image
-
-        run: |
-          cd starter/frontend
-          docker buildx build --build-arg=$REACT_APP_MOVIE_API_URL --tag mp-frontend:latest .
-
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
