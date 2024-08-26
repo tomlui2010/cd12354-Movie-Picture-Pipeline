@@ -201,6 +201,33 @@ jobs:
           cd starter/backend
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+  cleanup:
+    name: cleanup
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: 
+      - create-infra
+      - backend-cd-build
+    steps:
+      - name: Download Terraform State
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-state
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.9
+
+      - name: Initialize Terraform
+        run: cd setup/terraform && terraform init
+
+      - name: Destroy Infrastructure
+        run: cd setup/terraform && terraform apply -auto-approve && terraform destroy -auto-approve
         
 
 
