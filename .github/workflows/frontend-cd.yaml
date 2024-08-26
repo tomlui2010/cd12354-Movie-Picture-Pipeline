@@ -41,7 +41,8 @@ jobs:
         continue-on-error: false
 
   frontend-ci-test:   
-    name: frontend-ci-lint
+    name: frontend-ci-test
+    needs: frontend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
