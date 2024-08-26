@@ -71,6 +71,6 @@ jobs:
       - name: Push docker image to AWS ECR
         if: matrix.task == 'build'
         run: | 
-          
-    needs: ${{ matrix.task == 'lint' && [] || matrix.task == 'test' && ['backend-ci-lint'] || ['backend-ci-test'] }}  
+    needs: ${{ matrix.task == 'lint' && [] || matrix.task == 'test' && ['backend-ci-lint'] || ['backend-ci-test'] }}
+
     
