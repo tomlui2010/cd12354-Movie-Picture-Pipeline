@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'setup/frontend/**'
+    # paths:
+    #   - 'setup/frontend/**'
 jobs:  
   backend-cd-lint:      
     name: backend-cd-lint
