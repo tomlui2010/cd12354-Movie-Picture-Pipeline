@@ -69,9 +69,64 @@ jobs:
           cd starter/frontend
           npm test
 
+  eks-setup:
+    name: eks-setup
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.3.5
+
+    - name: Terraform Init
+      run: cd setup/terraform && terraform init
+
+    - name: Terraform Validate
+      run: cd setup/terraform && terraform validate 
+
+    - name: Terraform Plan
+      run: cd setup/terraform && terraform plan 
+      continue-on-error: true
+
+    - name: Terraform Apply
+      run: cd setup/terraform && terraform apply -auto-approve
+
+    - name: Upload Terraform State
+      uses: actions/upload-artifact@v3
+      with:
+        name: terraform-state
+        path: setup/terraform/terraform.tfstate
+
+  wait_for_eks:
+    runs-on: ubuntu-latest
+    needs: eks-setup
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Check EKS Cluster Status
+        run: |
+          aws eks describe-cluster --name ${{vars.CLUSTER_NAME}} --region ${{vars.AWS_REGION}} | jq -e '.cluster.status == "ACTIVE"' > /dev/null
+        continue-on-error: false
+
   frontend-cd-build:    
     name: frontend-cd-build
-    needs: frontend-cd-test
+    needs: wait_for_eks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
