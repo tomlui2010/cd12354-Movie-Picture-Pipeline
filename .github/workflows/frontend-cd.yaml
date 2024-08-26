@@ -6,8 +6,8 @@ on:
     # paths:
     #   - 'setup/frontend/**'
 jobs:  
-  frontend-ci-lint:  
-    name: frontend-ci-lint
+  frontend-cd-lint:  
+    name: frontend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,9 +40,9 @@ jobs:
           /usr/local/bin/hadolint starter/frontend/Dockerfile
         continue-on-error: false
 
-  frontend-ci-test:   
-    name: frontend-ci-test
-    needs: frontend-ci-lint
+  frontend-cd-test:   
+    name: frontend-cd-test
+    needs: frontend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,9 +69,9 @@ jobs:
           cd starter/frontend
           npm test
 
-  frontend-ci-build:    
-    name: frontend-ci-build
-    needs: frontend-ci-test
+  frontend-cd-build:    
+    name: frontend-cd-build
+    needs: frontend-cd-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
