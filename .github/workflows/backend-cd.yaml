@@ -209,7 +209,6 @@ jobs:
         with:
           version: v1.29.0
       
-
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -222,9 +221,11 @@ jobs:
           CLUSTER_NAME=$(aws eks list-clusters --region ${{ vars.AWS_REGION }} --query "clusters[0]" --output text)
           echo "Cluster Name: $CLUSTER_NAME"
           aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER_NAME
-            
-      - name: Deploy backend App
+
+      - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
+
+      - name: Deploy backend App
         run: |
           cd starter/backend/k8s
           kustomize edit set image backend=${{ env.frontend_ecr }}:${{ github.sha }}

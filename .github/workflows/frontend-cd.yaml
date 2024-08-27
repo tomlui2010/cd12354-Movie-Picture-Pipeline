@@ -120,7 +120,6 @@ jobs:
         name: terraform-state
         path: setup/terraform/terraform.tfstate
 
-
   wait_for_eks:
     runs-on: ubuntu-latest
     needs: create-infra
@@ -202,9 +201,11 @@ jobs:
           CLUSTER_NAME=$(aws eks list-clusters --region ${{ vars.AWS_REGION }} --query "clusters[0]" --output text)
           echo "Cluster Name: $CLUSTER_NAME"
           aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER_NAME
-            
-      - name: Deploy frontend App
+
+      - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
+
+      - name: Deploy frontend App
         run: |
           cd starter/frontend/k8s
           kustomize edit set image frontend=${{ env.frontend_ecr }}:${{ github.sha }}
