@@ -86,7 +86,7 @@ jobs:
 
   create-infra:
     name: create-infra
-    needs: frontend-cd-test
+    needs: backend-cd-test
     runs-on: ubuntu-latest
     outputs:
       backend_ecr: ${{ steps.get_backend_ecr.outputs.backend_ecr }}
