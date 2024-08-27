@@ -100,7 +100,7 @@ jobs:
       run: cd setup/terraform && terraform validate 
 
     - name: Terraform Plan
-      run: cd setup/terraform && terraform plan 
+      run: cd setup/terraform && terraform plan -var "aws_default_region=${{ vars.AWS_REGION }}" -var "aws_account_id=${{ vars.AWS_ACCOUNT_ID }}"
       continue-on-error: true
 
     - name: Terraform Apply
