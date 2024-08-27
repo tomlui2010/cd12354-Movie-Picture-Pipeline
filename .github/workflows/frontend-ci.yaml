@@ -1,9 +1,10 @@
 name: frontend-ci
-on: workflow_dispatch
-  # pull_request:
-  #   branches: [main]
-  #   paths:
-  #     - 'setup/frontend/**'
+on: 
+  pull_request:
+    branches: [main]
+    paths:
+      - 'setup/frontend/**'
+  workflow_dispatch:
 jobs:  
   frontend-ci-lint:  
     name: frontend-ci-lint

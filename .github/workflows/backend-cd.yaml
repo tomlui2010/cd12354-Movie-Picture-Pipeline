@@ -86,6 +86,7 @@ jobs:
 
   create-infra:
     name: create-infra
+    needs: frontend-cd-test
     runs-on: ubuntu-latest
     outputs:
       backend_ecr: ${{ steps.get_backend_ecr.outputs.backend_ecr }}
@@ -117,13 +118,16 @@ jobs:
       continue-on-error: true
 
     - name: Terraform Apply
-      run: cd setup/terraform && terraform apply -auto-approve
+      env:
+        AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+        AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      run: cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=${{ env.AWS_DEFAULT_REGION }}" -var "aws_account_id=${{ env.AWS_ACCOUNT_ID }}"
 
-    - name: Upload Terraform State
+    - name: Upload Terraform state file
       uses: actions/upload-artifact@v3
       with:
         name: terraform-state
-        path: setup/terraform/terraform.tfstate
+        path: terraform.tfstate
 
     - name: Get backend_ecr from Terraform output
       id: get_backend_ecr
@@ -183,27 +187,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      
-      - name: Create ECR repository
-        run: |
-          aws ecr create-repository \
-            --repository-name backend \
-            --image-scanning-configuration scanOnPush=true \
-            --region ${{ vars.AWS_REGION }} || echo "Repository already exists"
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push docker image to Amazon ECR
+      - name: Trigger CodeBuild
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: backend
-          IMAGE_TAG: ${{ github.sha }}
+          PROJECT_NAME: udacity
         run: |
-          cd starter/backend
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          aws codebuild start-build --project-name $PROJECT_NAME --environment-variables-override name=AWS_DEFAULT_REGION,value=${{vars.AWS_REGION}} name=AWS_ACCOUNT_ID,value=${{vars.AWS_ACCOUNT_ID}}
 
   backend-cd-deploy:
     name: backend-cd-deploy
@@ -243,9 +232,7 @@ jobs:
           cd starter/backend/k8s
           kustomize edit set image backend=$backend_ecr:${{ github.sha }}
           kustomize build | kubectl apply -f 
-      
-
-  
+        
   cleanup:
     name: cleanup
     runs-on: ubuntu-latest
@@ -253,11 +240,8 @@ jobs:
     needs: 
       - create-infra
       - backend-cd-build
+      - backend-cd-deploy
     steps:
-      - name: Download Terraform State
-        uses: actions/download-artifact@v3
-        with:
-          name: terraform-state
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -269,9 +253,22 @@ jobs:
 
       - name: Initialize Terraform
         run: cd setup/terraform && terraform init
+      
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Download Terraform state file
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-state
+          path: setup/terraform
 
       - name: Destroy Infrastructure
-        run: cd setup/terraform && terraform apply -auto-approve && terraform destroy -auto-approve
+        run: cd setup/terraform && terraform destroy -auto-approve
         
 
 

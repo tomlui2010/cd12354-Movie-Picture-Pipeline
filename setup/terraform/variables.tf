@@ -17,3 +17,13 @@ variable "private_az" {
   description = "Change this to a letter a-f only if you encounter an error during setup"
   default     = "b"
 }
+
+variable "aws_default_region" {
+  description = "AWS region"
+  type        = string
+}
+
+variable "aws_account_id" {
+  description = "AWS account ID"
+  type        = string
+}
