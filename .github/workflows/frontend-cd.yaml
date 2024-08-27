@@ -105,8 +105,14 @@ jobs:
 
     - name: Terraform Apply
       run: cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=${{ vars.AWS_REGION }}" -var "aws_account_id=${{ vars.AWS_ACCOUNT_ID }}"
+    
+    - name: Terraform Destroy on Failure
+      if: failure()
+      run: terraform destroy -auto-approve -refresh=false
+      working-directory: ./setup/terraform
 
     - name: Upload Terraform State
+      if: success()
       uses: actions/upload-artifact@v3
       with:
         name: terraform-state
@@ -114,7 +120,9 @@ jobs:
 
     - name: Get frontend_ecr from Terraform output
       id: get_frontend_ecr
-      run: echo "FRONTEND_ECR=$(terraform output -raw frontend_ecr)" >> $GITHUB_ENV
+      run: |
+        FRONTEND_ECR=$(terraform output -raw frontend_ecr| tr -d '\n)
+        echo "FRONTEND_ECR=$FRONTEND_ECR" >> $GITHUB_ENV
 
   wait_for_eks:
     runs-on: ubuntu-latest

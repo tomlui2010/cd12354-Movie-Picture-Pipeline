@@ -120,15 +120,23 @@ jobs:
     - name: Terraform Apply
       run: cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=${{ vars.AWS_REGION }}" -var "aws_account_id=${{ vars.AWS_ACCOUNT_ID }}"
 
+    - name: Terraform Destroy on Failure
+      if: failure()
+      run: terraform destroy -auto-approve -refresh=false
+      working-directory: ./setup/terraform
+
     - name: Upload Terraform state file
+      if: success()
       uses: actions/upload-artifact@v3
       with:
         name: terraform-state
-        path: terraform.tfstate
+        path: setup/terraform/terraform.tfstate
 
     - name: Get backend_ecr from Terraform output
       id: get_backend_ecr
-      run: echo "BACKEND_ECR=$(terraform output -raw backend_ecr)" >> $GITHUB_ENV
+      run: |
+        BACKEND_ECR=$(terraform output -raw backend_ecr| tr -d '\n)
+        echo "BACKEND_ECR=$BACKEND_ECR" >> $GITHUB_ENV
 
   wait_for_eks:
     runs-on: ubuntu-latest
