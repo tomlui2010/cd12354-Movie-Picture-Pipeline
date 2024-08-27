@@ -95,11 +95,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build the frontend image
-        env:
-          REACT_APP_MOVIE_API_URL: 'http://localhost:5000'
         run: |
           cd starter/frontend
-          docker buildx build --build-arg=$REACT_APP_MOVIE_API_URL --tag mp-frontend:latest .
+          docker buildx build --build-arg=${{ vars.REACT_APP_MOVIE_API_URL }} --tag mp-frontend:latest .
 
 
 

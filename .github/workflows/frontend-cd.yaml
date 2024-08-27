@@ -1,10 +1,11 @@
 name: frontend-cd
-on: workflow_dispatch
-  # push:
-  #   branches:
-  #     - main
-  #   # paths:
-  #   #   - 'setup/frontend/**'
+on: 
+  push:
+    branches:
+      - main
+    paths:
+      - 'setup/frontend/**'
+  workflow_dispatch:
 jobs:  
   frontend-cd-lint:  
     name: frontend-cd-lint
@@ -72,6 +73,8 @@ jobs:
   create-infra:
     name: create-infra
     runs-on: ubuntu-latest
+    outputs:
+      frontend_ecr: ${{ steps.get_frontend_ecr.outputs.frontend_ecr }}
 
     steps:
     - name: Checkout code
@@ -107,6 +110,10 @@ jobs:
       with:
         name: terraform-state
         path: setup/terraform/terraform.tfstate
+
+    - name: Get frontend_ecr from Terraform output
+      id: get_frontend_ecr
+      run: echo "FRONTEND_ECR=$(terraform output -raw frontend_ecr)" >> $GITHUB_ENV
 
   wait_for_eks:
     runs-on: ubuntu-latest
@@ -169,14 +176,52 @@ jobs:
 
       - name: Build, tag, and push docker image to Amazon ECR
         env:
-          REACT_APP_MOVIE_API_URL: 'http://localhost:5000'
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd starter/frontend
-          docker build --build-arg=$REACT_APP_MOVIE_API_URL -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg=${{ vars.REACT_APP_MOVIE_API_URL }} -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+  frontend-cd-deploy:
+    name: frontend-cd-deploy
+    runs-on: ubuntu-latest
+    needs: 
+      - create-infra
+      - frontend-cd-build
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.29.0
+
+      - name: Setup kustomize
+        uses: karancode/kustomize-github-action@master
+        with:
+          kustomize_version: '3.0.0'
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Generate Kubeconfig
+        run: |
+          CLUSTER_NAME=$(aws eks list-clusters --region ${{ vars.AWS_REGION }} --query "clusters[0]" --output text)
+          echo "Cluster Name: $CLUSTER_NAME"
+          aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER_NAME
+            
+      - name: Deploy frontend App
+        run: |
+          cd starter/frontend/k8s
+          kustomize edit set image frontend=$frontend_ecr:${{ github.sha }}
+          kustomize build | kubectl apply -f 
 
   cleanup:
     name: cleanup
