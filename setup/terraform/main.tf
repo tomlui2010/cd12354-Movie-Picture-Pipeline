@@ -280,11 +280,17 @@ resource "aws_codebuild_project" "codebuild" {
       name  = "AWS_ACCOUNT_ID"
       value = var.aws_account_id
     }
+
+    environment_variable {
+      name      = "GITHUB_TOKEN"
+      value     = var.github_token
+      type      = "SECRETS_MANAGER"
+    }
   }
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/tomlui2010/cd12354-Movie-Picture-Pipeline"
+    location        = "https://${var.github_token}@github.com/tomlui2010/cd12354-Movie-Picture-Pipeline"
     git_clone_depth = 1
     buildspec       = "buildspec.yml"
   }
@@ -312,9 +318,38 @@ resource "aws_iam_role" "codebuild" {
   })
 }
 
+
+
 # Attach the IAM policy to the codebuild role
 resource "aws_iam_role_policy_attachment" "codebuild" {
   policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess"
+  role       = aws_iam_role.codebuild.name
+}
+
+# Create a custom policy for CloudWatch Logs permissions
+resource "aws_iam_policy" "codebuild_cloudwatch_logs" {
+  name        = "CodeBuildCloudWatchLogsPolicy"
+  description = "Allow CodeBuild to create and manage CloudWatch Logs"
+  
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# Attach the CloudWatch Logs policy to the codebuild role
+resource "aws_iam_role_policy_attachment" "codebuild_cloudwatch_logs_attachment" {
+  policy_arn = aws_iam_policy.codebuild_cloudwatch_logs.arn
   role       = aws_iam_role.codebuild.name
 }
 
