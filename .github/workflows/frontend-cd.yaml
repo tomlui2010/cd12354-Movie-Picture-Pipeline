@@ -209,4 +209,4 @@ jobs:
         run: |
           cd starter/frontend/k8s
           kustomize edit set image frontend=${{ env.frontend_ecr }}:${{ github.sha }}
-          kustomize build | kubectl apply -f 
+          kustomize build | kubectl apply -f -

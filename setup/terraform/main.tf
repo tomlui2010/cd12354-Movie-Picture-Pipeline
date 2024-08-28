@@ -361,6 +361,32 @@ resource "aws_iam_role_policy_attachment" "codebuild_cloudwatch_logs_attachment"
   role       = aws_iam_role.codebuild.name
 }
 
+# Create a custom policy for SSM permissions
+resource "aws_iam_policy" "codebuild_ssm" {
+  name        = "CodeBuildSSMPolicy"
+  description = "Allow CodeBuild to access SSM Parameter Store"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:*"
+        ],
+        Resource = "arn:aws:ssm:*:*:parameter/*"
+      }
+    ]
+  })
+}
+
+# Attach the SSM policy to the codebuild role
+resource "aws_iam_role_policy_attachment" "codebuild_ssm_attachment" {
+  policy_arn = aws_iam_policy.codebuild_ssm.arn
+  role       = aws_iam_role.codebuild.name
+}
+
+
 ####################
 # Github Action role
 ####################
