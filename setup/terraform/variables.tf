@@ -28,7 +28,7 @@ variable "aws_account_id" {
   type        = string
 }
 
-variable "github_token" {
+variable "github_pat" {
   description = "Github Token"
   type        = string
 }

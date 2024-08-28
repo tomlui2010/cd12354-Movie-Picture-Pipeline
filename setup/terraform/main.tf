@@ -256,6 +256,22 @@ data "aws_iam_policy_document" "assume_role_policy" {
 # CodeBuild Resources
 ######################
 # Create a CodeBuild project
+resource "aws_secretsmanager_secret" "github_pat" {
+  name        = "github_pat"
+  description = "GitHub Personal Access Token"
+}
+resource "aws_secretsmanager_secret_version" "github_pat_value" {
+  secret_id     = aws_secretsmanager_secret.github_pat.id
+  secret_string = var.github_pat
+}
+# Data source to get the GitHub PAT from Secrets Manager
+data "aws_secretsmanager_secret" "github_pat" {
+  name = "github_pat"
+}
+
+data "aws_secretsmanager_secret_version" "github_pat_value" {
+  secret_id = data.aws_secretsmanager_secret.github_pat.id
+}
 resource "aws_codebuild_project" "codebuild" {
   name          = "udacity"
   description   = "Udacity CodeBuild project"
@@ -283,14 +299,14 @@ resource "aws_codebuild_project" "codebuild" {
 
     environment_variable {
       name      = "GITHUB_TOKEN"
-      value     = var.github_token
+      value     = data.aws_secretsmanager_secret_version.github_pat_value.secret_string
       type      = "SECRETS_MANAGER"
     }
   }
 
   source {
     type            = "GITHUB"
-    location        = "https://${var.github_token}@github.com/tomlui2010/cd12354-Movie-Picture-Pipeline"
+    location        = "https://github.com/tomlui2010/cd12354-Movie-Picture-Pipeline"
     git_clone_depth = 1
     buildspec       = "buildspec.yml"
   }
