@@ -264,14 +264,7 @@ resource "aws_secretsmanager_secret_version" "github_pat_value" {
   secret_id     = aws_secretsmanager_secret.github_pat.id
   secret_string = var.github_pat
 }
-# Data source to get the GitHub PAT from Secrets Manager
-data "aws_secretsmanager_secret" "github_pat" {
-  name = "github_pat"
-}
 
-data "aws_secretsmanager_secret_version" "github_pat_value" {
-  secret_id = data.aws_secretsmanager_secret.github_pat.id
-}
 resource "aws_codebuild_project" "codebuild" {
   name          = "udacity"
   description   = "Udacity CodeBuild project"
