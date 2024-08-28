@@ -256,14 +256,13 @@ data "aws_iam_policy_document" "assume_role_policy" {
 # CodeBuild Resources
 ######################
 # Create a CodeBuild project
-resource "aws_secretsmanager_secret" "github_pat" {
-  name        = "github_pat"
+resource "aws_ssm_parameter" "github_pat" {
+  name        = "/codebuild/github_pat"
+  type        = "SecureString"
+  value       = var.github_pat
   description = "GitHub Personal Access Token"
 }
-resource "aws_secretsmanager_secret_version" "github_pat_value" {
-  secret_id     = aws_secretsmanager_secret.github_pat.id
-  secret_string = var.github_pat
-}
+
 
 resource "aws_codebuild_project" "codebuild" {
   name          = "udacity"
@@ -292,8 +291,8 @@ resource "aws_codebuild_project" "codebuild" {
 
     environment_variable {
       name      = "GITHUB_TOKEN"
-      value     = aws_secretsmanager_secret_version.github_pat_value.secret_string
-      type      = "SECRETS_MANAGER"
+      value     = aws_ssm_parameter.github_pat.name
+      type      = "PARAMETER_STORE"
     }
   }
 
