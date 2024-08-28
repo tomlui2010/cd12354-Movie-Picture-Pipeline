@@ -292,7 +292,7 @@ resource "aws_codebuild_project" "codebuild" {
 
     environment_variable {
       name      = "GITHUB_TOKEN"
-      value     = data.aws_secretsmanager_secret_version.github_pat_value.secret_string
+      value     = aws_secretsmanager_secret_version.github_pat_value.secret_string
       type      = "SECRETS_MANAGER"
     }
   }
