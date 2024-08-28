@@ -1,5 +1,4 @@
 version: 0.2
-
 phases:
   install:
     runtime-versions:
@@ -13,7 +12,7 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - echo Getting the Git commit SHA
       - export GIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION)
-      - echo Git SHA: $GIT_SHA
+      - echo Git SHA  $GIT_SHA
   build:
     commands:
       - echo Start building ...
@@ -23,7 +22,7 @@ phases:
       - echo Building docker image for frontend ..
       - docker build -t frontend:$GIT_SHA starter/frontend/.
       - docker tag frontend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
-  post_build:    
+  post_build:
     commands:
       - echo Completed build ...
       - echo Pushing the docker image to ECR repo
