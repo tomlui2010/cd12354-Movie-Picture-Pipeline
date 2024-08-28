@@ -273,10 +273,16 @@ jobs:
         uses: imranismail/setup-kustomize@v2
 
       - name: Deploy backend App
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
           cd starter/backend/k8s
-          backend_ecr=$(aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text)
-          kustomize edit set image backend=$backend_ecr:${{ github.sha }}
+          aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text
+          BACKEND_ECR=$(aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text)
+          echo $BACKEND_ECR
+          kustomize edit set image backend=$BACKEND_ECR:${{ github.sha }}
           kustomize build | kubectl apply -f -
         
  

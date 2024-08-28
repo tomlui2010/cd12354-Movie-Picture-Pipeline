@@ -268,8 +268,12 @@ jobs:
         uses: imranismail/setup-kustomize@v2
 
       - name: Deploy frontend App
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
           cd starter/frontend/k8s
-          frontend_ecr=$(aws ecr describe-repositories --repository-names frontend --query 'repositories[*].[repositoryUri]' --output text)
-          kustomize edit set image frontend=$frontend_ecr:${{ github.sha }}
+          FRONTEND_ECR=$(aws ecr describe-repositories --repository-names frontend --query 'repositories[*].[repositoryUri]' --output text)
+          kustomize edit set image frontend=$FRONTEND_ECR:${{ github.sha }}
           kustomize build | kubectl apply -f -
