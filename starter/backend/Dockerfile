@@ -17,10 +17,10 @@ RUN apk update && \
 
 RUN mkdir -p /var/www/app && mkdir /app
 
-COPY Pipfile* /app
+COPY Pipfile* /app/
 # hadolint ignore=DL3003
 RUN cd /app && pipenv install --system --deploy
 
-COPY . /app
+COPY . /app/
 # hadolint ignore=DL3025
 CMD uwsgi --http :5000 --master --enable-threads -s /var/www/app/app.sock --manage-script-name --mount /=app:app
