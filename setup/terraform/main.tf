@@ -301,7 +301,7 @@ resource "aws_codebuild_project" "codebuild" {
     type            = "GITHUB"
     location        = "https://github.com/tomlui2010/cd12354-Movie-Picture-Pipeline"
     git_clone_depth = 1
-    buildspec       = "buildspec.yml"
+    buildspec       = "buildspec.yaml"
   }
 
   cache {
