@@ -275,7 +275,7 @@ jobs:
       - name: Deploy backend App
         run: |
           cd starter/backend/k8s
-          backend_ecr = $(aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text)
+          backend_ecr=$(aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text)
           kustomize edit set image backend=$backend_ecr:${{ github.sha }}
           kustomize build | kubectl apply -f -
         
