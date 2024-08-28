@@ -118,8 +118,6 @@ jobs:
     - name: Terraform Apply
       run: |
         cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=${{ vars.AWS_REGION }}" -var "aws_account_id=${{ vars.AWS_ACCOUNT_ID }}" -var "github_pat=${{ secrets.TOKEN_GITHUB }}"
-        BACKEND_ECR=$(terraform output -raw backend_ecr | tr -d '\n')
-        echo "backend_ecr=$BACKEND_ECR" >> $GITHUB_ENV
 
     - name: Terraform Destroy on Failure
       if: failure()
@@ -277,7 +275,8 @@ jobs:
       - name: Deploy backend App
         run: |
           cd starter/backend/k8s
-          kustomize edit set image backend=${{ env.frontend_ecr }}:${{ github.sha }}
+          backend_ecr = $(aws ecr describe-repositories --repository-names backend --query 'repositories[*].[repositoryUri]' --output text)
+          kustomize edit set image backend=$backend_ecr:${{ github.sha }}
           kustomize build | kubectl apply -f -
         
  
