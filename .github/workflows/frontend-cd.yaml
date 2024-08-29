@@ -206,7 +206,7 @@ jobs:
           PROJECT_NAME: "udacity"
         run: |
           # Fetch the latest build ID
-          build_id=$(aws codebuild list-builds-for-project --project-name $PROJECT_NAME --max-items 1 --query 'ids[0]' --output text)
+          build_id=$(aws codebuild list-builds-for-project --project-name $PROJECT_NAME --max-items 1 | jq -r '.ids[0]')
 
           # Check if build ID was fetched successfully
           if [ -z "$build_id" ]; then
