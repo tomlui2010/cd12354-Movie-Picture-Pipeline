@@ -340,7 +340,7 @@ resource "aws_iam_role_policy_attachment" "codebuild_ecr_full_access" {
   role       = aws_iam_role.codebuild.name
 }
 # Attach the ElasticLoadBalancingFullAccess policy to the CodeBuild role
-resource "aws_iam_role_policy_attachment" "codebuild_ecr_full_access" {
+resource "aws_iam_role_policy_attachment" "codebuild_elb_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
   role       = aws_iam_role.codebuild.name
 }
