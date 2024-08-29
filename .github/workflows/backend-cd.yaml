@@ -190,7 +190,7 @@ jobs:
         env:
           PROJECT_NAME: udacity
         run: |
-          aws codebuild start-build --project-name $PROJECT_NAME --environment-variables-override name=AWS_DEFAULT_REGION,value=${{vars.AWS_REGION}} name=AWS_ACCOUNT_ID,value=${{vars.AWS_ACCOUNT_ID}}
+          aws codebuild start-build --project-name $PROJECT_NAME --environment-variables-override name=AWS_DEFAULT_REGION,value=${{vars.AWS_REGION}} name=AWS_ACCOUNT_ID,value=${{vars.AWS_ACCOUNT_ID}} name=APP_NAME,value=backend
 
   wait_for_codebuild:
     runs-on: ubuntu-latest
@@ -284,5 +284,28 @@ jobs:
           echo $BACKEND_ECR
           kustomize edit set image backend=$BACKEND_ECR:${{ github.sha }}
           kustomize build | kubectl apply -f -
+          kubectl rollout status deployment/backend
+          if [ $? -eq 0 ]; then
+            echo "Rollout successful. Fetching the external IP or DNS name..."
+  
+            # Get the external IP or DNS name of the service
+            EXTERNAL_IP=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            
+            # Check if the EXTERNAL_IP is not empty
+            if [ -n "$EXTERNAL_IP" ]; then
+              echo "External IP or DNS name: $EXTERNAL_IP"
+              echo "EXTERNALIP=$EXTERNALIP" > externalip.txt
+            else
+              echo "External IP or DNS name not available yet."
+            fi
+          else
+            echo "Rollout failed."
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: externalip-artifact
+          path: externalip.txt
         
  

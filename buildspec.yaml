@@ -18,31 +18,26 @@ phases:
   build:
     commands:
       - echo Start building ...
-      - echo Building docker image for backend ..
-      - docker build -t backend:$GIT_SHA starter/backend/.
-      - docker tag backend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
-      - echo Fetching backend url
-      - BACKEND_URL=$(aws elb describe-load-balancers --load-balancer-names backend | jq -r '.LoadBalancerDescriptions[0].DNSName')
+
       - |
-        if [ -n "$BACKEND_URL" ]; then
+        if [ "$APP_NAME" = "frontend" ]; then
           echo "Building docker image for frontend ..."
-          docker build --build-arg REACT_APP_MOVIE_API_URL=http://$BACKEND_URL -t frontend:$GIT_SHA starter/frontend/.
+          docker build --build-arg REACT_APP_MOVIE_API_URL=$BACKEND_URL -t frontend:$GIT_SHA starter/frontend/.
           docker tag frontend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
         else
-          echo "BACKEND_URL is empty, skipping frontend build."
+          echo Building docker image for backend ..
+          docker build -t backend:$GIT_SHA starter/backend/.
+          docker tag backend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
         fi
   post_build:
     commands:
       - echo Completed build ...
-      - echo Pushing the backend docker image to ECR repo
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
-      - BACKEND_URL=$(aws elb describe-load-balancers --load-balancer-names backend | jq -r '.LoadBalancerDescriptions[0].DNSName')
       - |
-        if [ -n "$BACKEND_URL" ]; then
+        if [ "$APP_NAME" = "frontend" ]; then
           echo Pushing the frontend docker image to ECR repo
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
         else
-          echo "Frontend build not ready . Skipping frontend image push to repo"
+          echo Pushing the backend docker image to ECR repo
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
         fi
-      - 
       - echo Build Complete

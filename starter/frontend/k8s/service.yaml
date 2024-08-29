@@ -4,8 +4,6 @@ metadata:
   name: frontend
   labels:
     app: frontend
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-name: "frontend"
 spec:
   type: LoadBalancer
   selector:
