@@ -339,6 +339,11 @@ resource "aws_iam_role_policy_attachment" "codebuild_ecr_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
   role       = aws_iam_role.codebuild.name
 }
+# Attach the ElasticLoadBalancingFullAccess policy to the CodeBuild role
+resource "aws_iam_role_policy_attachment" "codebuild_ecr_full_access" {
+  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+  role       = aws_iam_role.codebuild.name
+}
 
 # Create a custom policy for CloudWatch Logs permissions
 resource "aws_iam_policy" "codebuild_cloudwatch_logs" {

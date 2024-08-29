@@ -34,7 +34,15 @@ phases:
   post_build:
     commands:
       - echo Completed build ...
-      - echo Pushing the docker image to ECR repo
+      - echo Pushing the backend docker image to ECR repo
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
+      - BACKEND_URL=$(aws elb describe-load-balancers --load-balancer-names backend | jq -r '.LoadBalancerDescriptions[0].DNSName')
+      - |
+        if [ -n "$BACKEND_URL" ]; then
+          echo Pushing the frontend docker image to ECR repo
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
+        else
+          echo "Frontend build not ready . Skipping frontend image push to repo"
+        fi
+      - 
       - echo Build Complete
