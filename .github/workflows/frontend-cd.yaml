@@ -1,4 +1,4 @@
-name: frontend-cd
+name: Frontend Continuous Deployment
 on: 
   push:
     branches:
@@ -43,7 +43,6 @@ jobs:
 
   frontend-cd-test:   
     name: frontend-cd-test
-    needs: frontend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +71,9 @@ jobs:
 
   create-infra:
     name: create-infra
-    needs: frontend-cd-test
+    needs: 
+      - frontend-cd-test
+      - frontend-cd-lint
     runs-on: ubuntu-latest
 
     steps:
@@ -153,7 +154,6 @@ jobs:
     name: frontend-cd-build
     needs: 
     - wait_for_eks
-    - backend-cd-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

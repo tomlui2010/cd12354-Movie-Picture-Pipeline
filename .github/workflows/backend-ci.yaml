@@ -1,4 +1,4 @@
-name: backend-ci
+name: Backend Continuous Integration
 on:  
   pull_request:
     branches: [main]
@@ -49,7 +49,6 @@ jobs:
 
   backend-ci-test:      
     name: backend-ci-test
-    needs: backend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +84,9 @@ jobs:
 
   backend-ci-build:      
     name: backend-ci-build
-    needs: backend-ci-test
+    needs: 
+      - backend-ci-test
+      - backend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

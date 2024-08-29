@@ -1,4 +1,4 @@
-name: backend-cd
+name: Backend Continuous Deployment
 on:
   push:
     branches:
@@ -50,7 +50,6 @@ jobs:
 
   backend-cd-test:      
     name: backend-cd-test
-    needs: backend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +85,9 @@ jobs:
 
   create-infra:
     name: create-infra
-    needs: backend-cd-test
+    needs: 
+      - backend-cd-test
+      - backend-cd-lint
     runs-on: ubuntu-latest
 
     steps:
@@ -151,7 +152,6 @@ jobs:
     name: backend-cd-build
     needs: 
     - wait_for_eks
-    - backend-cd-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
