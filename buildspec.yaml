@@ -13,6 +13,7 @@ phases:
       - echo Getting the Git commit SHA
       - export GIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION)
       - echo Git SHA  $GIT_SHA
+      
   build:
     commands:
       - echo Start building ...
@@ -20,7 +21,7 @@ phases:
       - docker build -t backend:$GIT_SHA starter/backend/.
       - docker tag backend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/backend:$GIT_SHA
       - echo Building docker image for frontend ..
-      - docker build --build-arg REACT_APP_MOVIE_API_URL=http://localhost:5000 -t frontend:$GIT_SHA starter/frontend/.
+      - docker build --build-arg REACT_APP_MOVIE_API_URL=http://backend:5000 -t frontend:$GIT_SHA starter/frontend/.
       - docker tag frontend:$GIT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/frontend:$GIT_SHA
   post_build:
     commands:
