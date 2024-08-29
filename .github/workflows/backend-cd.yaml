@@ -292,6 +292,7 @@ jobs:
             EXTERNAL_IP=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             
             # Check if the EXTERNAL_IP is not empty
+            echo "Check if the EXTERNAL_IP is not empty"
             if [ -n "$EXTERNAL_IP" ]; then
               echo "External IP or DNS name: $EXTERNAL_IP"
               echo "EXTERNALIP=$EXTERNALIP" > externalip.txt
