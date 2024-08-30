@@ -42,7 +42,6 @@ jobs:
 
   frontend-ci-test:   
     name: frontend-ci-test
-    needs: frontend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +70,9 @@ jobs:
 
   frontend-ci-build:    
     name: frontend-ci-build
-    needs: frontend-ci-test
+    needs: 
+      - frontend-ci-test
+      - frontend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
