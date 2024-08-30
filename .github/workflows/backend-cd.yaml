@@ -285,7 +285,7 @@ jobs:
             echo "Rollout successful. Fetching the external IP or DNS name..."
   
             # Get the external IP or DNS name of the service
-            EXTERNAL_IP=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            EXTERNAL_IP=$(kubectl get svc backend -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
             
             # Check if the EXTERNAL_IP is not empty
             echo "Check if the EXTERNAL_IP is not empty"
