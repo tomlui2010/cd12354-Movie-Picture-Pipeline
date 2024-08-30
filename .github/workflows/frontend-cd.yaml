@@ -138,26 +138,31 @@ jobs:
         name: terraform-state
         path: setup/terraform/terraform.tfstate
 
-  wait_for_eks:
-    runs-on: ubuntu-latest
-    needs: create-infra
-    steps:
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+    - name: Check EKS Cluster Status
+      run: |
+        aws eks describe-cluster --name ${{vars.CLUSTER_NAME}} --region ${{vars.AWS_REGION}} | jq -e '.cluster.status == "ACTIVE"' > /dev/null
+      continue-on-error: false
 
-      - name: Check EKS Cluster Status
-        run: |
-          aws eks describe-cluster --name ${{vars.CLUSTER_NAME}} --region ${{vars.AWS_REGION}} | jq -e '.cluster.status == "ACTIVE"' > /dev/null
-        continue-on-error: false
+  # wait_for_eks:
+  #   runs-on: ubuntu-latest
+  #   needs: create-infra
+  #   steps:
+  #     - name: Set up AWS CLI
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ vars.AWS_REGION }}
+
+  #     - name: Check EKS Cluster Status
+  #       run: |
+  #         aws eks describe-cluster --name ${{vars.CLUSTER_NAME}} --region ${{vars.AWS_REGION}} | jq -e '.cluster.status == "ACTIVE"' > /dev/null
+  #       continue-on-error: false
 
   frontend-cd-build:    
     name: frontend-cd-build
     needs: 
-    - wait_for_eks
+    - create-infra
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -198,17 +203,6 @@ jobs:
         run: |
           aws codebuild start-build --project-name $PROJECT_NAME --environment-variables-override name=AWS_DEFAULT_REGION,value=${{vars.AWS_REGION}} name=AWS_ACCOUNT_ID,value=${{vars.AWS_ACCOUNT_ID}} name=APP_NAME,value=frontend name=BACKEND_URL,value=http://$EXTERNALIP
 
-  wait_for_codebuild:
-    runs-on: ubuntu-latest
-    needs: frontend-cd-build
-    steps:
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
       - name: Fetch and wait for CodeBuild success
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -247,12 +241,61 @@ jobs:
           done
         continue-on-error: false
 
+  # wait_for_codebuild:
+  #   runs-on: ubuntu-latest
+  #   needs: frontend-cd-build
+  #   steps:
+  #     - name: Set up AWS CLI
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ vars.AWS_REGION }}
+
+  #     - name: Fetch and wait for CodeBuild success
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+  #         PROJECT_NAME: "udacity"
+  #       run: |
+  #         # Fetch the latest build ID
+  #         build_id=$(aws codebuild list-builds-for-project --project-name $PROJECT_NAME --max-items 1 | jq -r '.ids[0]')
+
+  #         # Check if build ID was fetched successfully
+  #         if [ -z "$build_id" ]; then
+  #           echo "No build ID found for the project."
+  #           exit 1
+  #         fi
+
+  #         echo "Latest build ID: $build_id"
+
+  #         # Loop to wait for build completion
+  #         while true; do
+  #           build_status=$(aws codebuild batch-get-builds --ids "$build_id" --query 'builds[0].buildStatus' --output text)
+
+  #           if [ "$build_status" == "SUCCEEDED" ]; then
+  #             echo "Build succeeded!"
+  #             break
+  #           elif [ "$build_status" == "FAILED" ]; then
+  #             echo "Build failed."
+  #             exit 1
+  #           elif [ "$build_status" == "IN_PROGRESS" ]; then
+  #             echo "Build still in progress, checking again in 30 seconds..."
+  #             sleep 30
+  #           else
+  #             echo "Build encountered an unexpected status: $build_status"
+  #             exit 1
+  #           fi
+  #         done
+  #       continue-on-error: false
+
   frontend-cd-deploy:
     name: frontend-cd-deploy
     runs-on: ubuntu-latest
     needs: 
       - create-infra
-      - wait_for_codebuild
+      - frontend-cd-build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -279,10 +322,6 @@ jobs:
         uses: imranismail/setup-kustomize@v2
 
       - name: Deploy frontend App
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
           cd starter/frontend/k8s
           FRONTEND_ECR=$(aws ecr describe-repositories --repository-names frontend --query 'repositories[*].[repositoryUri]' --output text)
