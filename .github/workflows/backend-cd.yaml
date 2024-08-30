@@ -1,10 +1,10 @@
 name: Backend Continuous Deployment
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - 'setup/frontend/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'setup/frontend/**'
   workflow_dispatch:
 jobs:  
   backend-cd-lint:      
