@@ -291,7 +291,7 @@ jobs:
             echo "Check if the EXTERNAL_IP is not empty"
             if [ -n "$EXTERNAL_IP" ]; then
               echo "External IP or DNS name: $EXTERNAL_IP"
-              echo "EXTERNALIP=$EXTERNALIP" > externalip.txt
+              echo "EXTERNALIP=$EXTERNAL_IP" > externalip.txt
               aws s3api create-bucket --bucket ${{ vars.AWS_ACCOUNT_ID }} --region ${{vars.AWS_REGION}} --create-bucket-configuration LocationConstraint=${{vars.AWS_REGION}}
               aws s3 cp externalip.txt s3://${{ vars.AWS_ACCOUNT_ID }}/
             else
