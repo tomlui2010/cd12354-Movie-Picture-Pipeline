@@ -1,71 +1,59 @@
 name: AWS Infrastructure Creation Workflow
 on:
   workflow_dispatch:
-jobs:  
+jobs:
   create-infra:
     name: create-infra #This job would create the required infrastructure using terraform
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ vars.AWS_REGION }}
-
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.3.9
-
-    - name: Terraform Init
-      run: cd setup/terraform && terraform init
-
-    - name: Terraform Validate
-      run: cd setup/terraform && terraform validate 
-
-    - name: Terraform Plan
-      env:
-        aws_default_region: ${{ vars.AWS_REGION }}
-        aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
-        github_pat: ${{ secrets.TOKEN_GITHUB }}
-        
-      run: cd setup/terraform && terraform plan -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
-      continue-on-error: true
-
-    - name: Terraform Apply
-      env:
-        aws_default_region: ${{ vars.AWS_REGION }}
-        aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
-        github_pat: ${{ secrets.TOKEN_GITHUB }}
-      run: |
-        cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
-
-    - name: Terraform Destroy on Failure
-      if: failure()
-      env:
-        aws_default_region: ${{ vars.AWS_REGION }}
-        aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
-        github_pat: ${{ secrets.TOKEN_GITHUB }}
-      run: terraform destroy -auto-approve -refresh=false -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
-      working-directory: ./setup/terraform
-
-    - name: Upload Terraform state file
-      if: success()
-      uses: actions/upload-artifact@v3
-      with:
-        name: terraform-state
-        path: setup/terraform/terraform.tfstate
-
-    - name: Check EKS Cluster Status
-      env:
-        cluster_name: ${{vars.CLUSTER_NAME}} 
-        aws_default_region: ${{vars.AWS_REGION}}         
-      run: |
-        aws eks describe-cluster --name $cluster_name --region $aws_default_region | jq -e '.cluster.status == "ACTIVE"' > /dev/null
-      continue-on-error: false
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.3.9
+      - name: Terraform Init
+        run: cd setup/terraform && terraform init
+      - name: Terraform Validate
+        run: cd setup/terraform && terraform validate
+      - name: Terraform Plan
+        env:
+          aws_default_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          github_pat: ${{ secrets.TOKEN_GITHUB }}
+        run: cd setup/terraform && terraform plan -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
+        continue-on-error: true
+      - name: Terraform Apply
+        env:
+          aws_default_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          github_pat: ${{ secrets.TOKEN_GITHUB }}
+        run: |
+          cd setup/terraform && terraform apply -auto-approve -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
+      - name: Terraform Destroy on Failure
+        if: failure()
+        env:
+          aws_default_region: ${{ vars.AWS_REGION }}
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          github_pat: ${{ secrets.TOKEN_GITHUB }}
+        run: terraform destroy -auto-approve -refresh=false -var "aws_default_region=$aws_default_region" -var "aws_account_id=$aws_account_id" -var "github_pat=$github_pat"
+        working-directory: ./setup/terraform
+      - name: Upload Terraform state file
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-state
+          path: setup/terraform/terraform.tfstate
+      - name: Check EKS Cluster Status
+        env:
+          cluster_name: ${{vars.CLUSTER_NAME}}
+          aws_default_region: ${{vars.AWS_REGION}}
+        run: |
+          aws eks describe-cluster --name $cluster_name --region $aws_default_region | jq -e '.cluster.status == "ACTIVE"' > /dev/null
+        continue-on-error: false

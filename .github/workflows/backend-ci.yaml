@@ -1,27 +1,24 @@
 name: Backend Continuous Integration
-on:  
+on:
   pull_request:
     branches: [main]
     paths:
       - 'setup/frontend/**'
   workflow_dispatch:
-jobs:  
-  backend-ci-lint:      
+jobs:
+  backend-ci-lint:
     name: backend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -29,40 +26,33 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
         run: |
           cd starter/backend
           pipenv install --dev
-
       - name: Run linter
         run: |
           cd starter/backend
           pipenv run lint
         continue-on-error: false
-
       - name: Run hadolint for dockerile
         run: |
           sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 && sudo chmod +x /usr/local/bin/hadolint
           /usr/local/bin/hadolint starter/backend/Dockerfile
         continue-on-error: false
-
-  backend-ci-test:      
+  backend-ci-test:
     name: backend-ci-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -70,37 +60,31 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
         run: |
           cd starter/backend
           pipenv install --dev
-
       - name: Run tests
         run: |
           cd starter/backend
           pipenv install
           pipenv run test
-
-  backend-ci-build:      
+  backend-ci-build:
     name: backend-ci-build
-    needs: 
+    needs:
       - backend-ci-test
       - backend-ci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -108,20 +92,11 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
-        run: |
-          cd starter/backend
-          pipenv install --dev     
-
+        run: "cd starter/backend\npipenv install --dev     \n"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Build the backend image
         run: |
           cd starter/backend
           docker buildx build --tag mp-backend:latest .
-
-
-
-    

@@ -6,23 +6,20 @@ on:
     paths:
       - 'setup/frontend/**'
   workflow_dispatch:
-jobs:  
-  backend-cd-lint:      
+jobs:
+  backend-cd-lint:
     name: backend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -30,40 +27,33 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
         run: |
           cd starter/backend
           pipenv install --dev
-
       - name: Run linter
         run: |
           cd starter/backend
           pipenv run lint
         continue-on-error: false
-
       - name: Run hadolint for dockerile
         run: |
           sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 && sudo chmod +x /usr/local/bin/hadolint
           /usr/local/bin/hadolint starter/backend/Dockerfile
         continue-on-error: false
-
-  backend-cd-test:      
+  backend-cd-test:
     name: backend-cd-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -71,37 +61,31 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
         run: |
           cd starter/backend
           pipenv install --dev
-
       - name: Run tests
         run: |
           cd starter/backend
           pipenv install
           pipenv run test
-
-  backend-cd-build:      
+  backend-cd-build:
     name: backend-cd-build
-    needs: 
-    - backend-cd-test
-    - backend-cd-lint
+    needs:
+      - backend-cd-test
+      - backend-cd-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Install pipenv
         run: |
           python -m pip install --upgrade pip
           pip install pipenv
-      
       - name: Cache pipenv virtualenv
         uses: actions/cache@v4
         with:
@@ -109,23 +93,17 @@ jobs:
             ~/.local/share/virtualenvs
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install the dependencies
-        run: |
-          cd starter/backend
-          pipenv install --dev  
-            
+        run: "cd starter/backend\npipenv install --dev  \n  \n"
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login
-
       - name: Build, tag, and push docker image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -135,67 +113,34 @@ jobs:
           docker build -t $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7} starter/backend/.
           echo Pushing the backend docker image to ECR repo
           docker push $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
-      
   backend-cd-deploy:
     name: backend-cd-deploy
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - backend-cd-build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: v1.29.0
-      
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login
-
       - name: Generate Kubeconfig
         run: |
           aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name ${{vars.CLUSTER_NAME}}
-
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
-
       - name: Deploy backend App
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_NAME: backend
-        run: |
-          cd starter/backend/k8s
-          kustomize edit set image backend=$REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
-          kustomize build | kubectl apply -f -
-          kubectl rollout status deployment/backend
-          # if [ $? -eq 0 ]; then
-          #   echo "Rollout successful. Fetching the external IP or DNS name..."
-  
-          #   # Get the external IP or DNS name of the service
-          #   EXTERNAL_IP=$(kubectl get svc backend -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
-            
-          #   # Check if the EXTERNAL_IP is not empty
-          #   echo "Check if the EXTERNAL_IP is not empty"
-          #   if [ -n "$EXTERNAL_IP" ]; then
-          #     echo "External IP or DNS name: $EXTERNAL_IP"
-          #     echo "EXTERNALIP=$EXTERNAL_IP" > externalip.txt
-          #     aws s3api create-bucket --bucket ${{ vars.AWS_ACCOUNT_ID }} --region ${{vars.AWS_REGION}} --create-bucket-configuration LocationConstraint=${{vars.AWS_REGION}}
-          #     aws s3 cp externalip.txt s3://${{ vars.AWS_ACCOUNT_ID }}/
-          #   else
-          #     echo "External IP or DNS name not available yet."
-          #   fi
-          # else
-          #   echo "Rollout failed."
-          # fi
-
-        
- 
+        run: "cd starter/backend/k8s\nkustomize edit set image backend=$REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}\nkustomize build | kubectl apply -f -\nkubectl rollout status deployment/backend\n# if [ $? -eq 0 ]; then\n#   echo \"Rollout successful. Fetching the external IP or DNS name...\"\n\n#   # Get the external IP or DNS name of the service\n#   EXTERNAL_IP=$(kubectl get svc backend -o json | jq -r '.status.loadBalancer.ingress[0].hostname')\n  \n#   # Check if the EXTERNAL_IP is not empty\n#   echo \"Check if the EXTERNAL_IP is not empty\"\n#   if [ -n \"$EXTERNAL_IP\" ]; then\n#     echo \"External IP or DNS name: $EXTERNAL_IP\"\n#     echo \"EXTERNALIP=$EXTERNAL_IP\" > externalip.txt\n#     aws s3api create-bucket --bucket ${{ vars.AWS_ACCOUNT_ID }} --region ${{vars.AWS_REGION}} --create-bucket-configuration LocationConstraint=${{vars.AWS_REGION}}\n#     aws s3 cp externalip.txt s3://${{ vars.AWS_ACCOUNT_ID }}/\n#   else\n#     echo \"External IP or DNS name not available yet.\"\n#   fi\n# else\n#   echo \"Rollout failed.\"\n# fi\n"
