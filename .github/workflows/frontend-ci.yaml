@@ -23,7 +23,8 @@ jobs:
           key: v1-npm-deps-${{ hashFiles('**/package-lock.json') }}
           restore-keys: v1-npm-deps-
       - name: Install the dependencies.
-        run: "cd starter/frontend && npm ci  \n"
+        run: |
+          cd starter/frontend && npm ci
       - name: Run lint
         run: |
           cd starter/frontend
@@ -51,7 +52,9 @@ jobs:
           key: v1-npm-deps-${{ hashFiles('**/package-lock.json') }}
           restore-keys: v1-npm-deps-
       - name: Install the dependencies.
-        run: "cd starter/frontend\nnpm ci  \n"
+        run: |
+          cd starter/frontend
+          npm ci
       - name: Run test
         run: |
           cd starter/frontend

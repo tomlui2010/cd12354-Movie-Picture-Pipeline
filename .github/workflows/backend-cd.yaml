@@ -97,7 +97,9 @@ jobs:
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
       - name: Install the dependencies
-        run: "cd starter/backend\npipenv install --dev  \n  \n"
+        run: |
+          cd starter/backend
+          pipenv install --dev
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -146,4 +148,39 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_NAME: backend
-        run: "cd starter/backend/k8s\nkustomize edit set image backend=$REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}\nkustomize build | kubectl apply -f -\nkubectl rollout status deployment/backend\n# if [ $? -eq 0 ]; then\n#   echo \"Rollout successful. Fetching the external IP or DNS name...\"\n\n#   # Get the external IP or DNS name of the service\n#   EXTERNAL_IP=$(kubectl get svc backend -o json | jq -r '.status.loadBalancer.ingress[0].hostname')\n  \n#   # Check if the EXTERNAL_IP is not empty\n#   echo \"Check if the EXTERNAL_IP is not empty\"\n#   if [ -n \"$EXTERNAL_IP\" ]; then\n#     echo \"External IP or DNS name: $EXTERNAL_IP\"\n#     echo \"EXTERNALIP=$EXTERNAL_IP\" > externalip.txt\n#     aws s3api create-bucket --bucket ${{ vars.AWS_ACCOUNT_ID }} --region ${{vars.AWS_REGION}} --create-bucket-configuration LocationConstraint=${{vars.AWS_REGION}}\n#     aws s3 cp externalip.txt s3://${{ vars.AWS_ACCOUNT_ID }}/\n#   else\n#     echo \"External IP or DNS name not available yet.\"\n#   fi\n# else\n#   echo \"Rollout failed.\"\n# fi\n"
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          aws_default_region: ${{ vars.AWS_REGION }}
+        run: | 
+          cd starter/backend/k8s
+          kustomize edit set image backend=$REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
+          kustomize build | kubectl apply -f -
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v2
+        with:
+          version: 'latest'
+      - name: Set REACT_APP_MOVIE_API_URL Repository Variable
+        run: |
+          kubectl rollout status deployment/backend
+          if [ $? -eq 0 ]; then
+            echo "Rollout successful. Fetching the external IP or DNS name..."
+            # Get the external IP or DNS name of the service
+            EXTERNAL_IP=$(kubectl get svc backend -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
+            # Check if the EXTERNAL_IP is not empty
+            echo "Check if the EXTERNAL_IP is not empty"
+              if [ -n "$EXTERNAL_IP" ]; then
+                echo "External IP or DNS name: $EXTERNAL_IP"
+                gh api -X PUT \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  /repos/${{ github.repository }}/actions/variables/REACT_APP_MOVIE_API_URL \
+                  -f name="REACT_APP_MOVIE_API_URL" \
+                  -f value="$EXTERNAL_IP"
+              else
+                  echo "External IP or DNS name not available yet."
+              fi
+          else
+            echo "Rollout failed."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+

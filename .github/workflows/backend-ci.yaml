@@ -96,7 +96,9 @@ jobs:
             ~/.cache/pip
           key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
       - name: Install the dependencies
-        run: "cd starter/backend\npipenv install --dev     \n"
+        run: | 
+          cd starter/backend
+          pipenv install --dev
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build the backend image
