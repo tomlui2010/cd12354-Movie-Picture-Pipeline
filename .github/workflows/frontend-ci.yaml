@@ -10,7 +10,8 @@ jobs:
     name: frontend-ci-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -37,7 +38,8 @@ jobs:
     name: frontend-ci-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -61,7 +63,8 @@ jobs:
       - frontend-ci-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:

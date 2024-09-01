@@ -15,7 +15,8 @@ jobs:
     name: frontend-cd-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -42,7 +43,8 @@ jobs:
     name: frontend-cd-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -66,7 +68,8 @@ jobs:
       - frontend-cd-lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -93,7 +96,7 @@ jobs:
       #     echo "EXTERNALIP=${EXTERNALIP}" >> $GITHUB_ENV
       - name: Login to ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Build, tag, and push docker image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -129,7 +132,7 @@ jobs:
         uses: imranismail/setup-kustomize@v2
       - name: Login to ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Deploy frontend App
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
