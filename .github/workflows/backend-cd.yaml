@@ -154,10 +154,6 @@ jobs:
           cd starter/backend/k8s
           kustomize edit set image backend=$REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
           kustomize build | kubectl apply -f -
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
-        with:
-          version: 'latest'
       - name: Set REACT_APP_MOVIE_API_URL Repository Variable
         run: |
           kubectl rollout status deployment/backend
