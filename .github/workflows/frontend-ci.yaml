@@ -27,8 +27,7 @@ jobs:
           cd starter/frontend && npm ci
       - name: Run lint
         run: |
-          cd starter/frontend
-          npm run lint
+          cd starter/frontend && npm run lint
         continue-on-error: false
       - name: Run hadolint for dockerile
         run: |
@@ -53,12 +52,10 @@ jobs:
           restore-keys: v1-npm-deps-
       - name: Install the dependencies.
         run: |
-          cd starter/frontend
-          npm ci
+          cd starter/frontend && npm ci
       - name: Run test
         run: |
-          cd starter/frontend
-          npm test
+          cd starter/frontend && npm test
   frontend-ci-build:
     name: frontend-ci-build
     needs:
