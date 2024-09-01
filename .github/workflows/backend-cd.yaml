@@ -165,11 +165,7 @@ jobs:
             echo "Check if the EXTERNAL_IP is not empty"
               if [ -n "$EXTERNAL_IP" ]; then
                 echo "External IP or DNS name: $EXTERNAL_IP"
-                gh api -X PUT \
-                  -H "Accept: application/vnd.github.v3+json" \
-                  /repos/${{ github.repository }}/actions/variables/REACT_APP_MOVIE_API_URL \
-                  -f name="REACT_APP_MOVIE_API_URL" \
-                  -f value="$EXTERNAL_IP"
+                gh secret set REACT_APP_MOVIE_API_URL --body "$EXTERNAL_IP"
               else
                   echo "External IP or DNS name not available yet."
               fi
